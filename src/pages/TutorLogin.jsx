@@ -6,6 +6,7 @@ import { Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Footer from '../components/Footer';
 
 const ALLOWED_TUTORS = [
     "Rene Mahn", "Madison Baggarly", "Sneha Balu", "Jett Carotti-Goldberg",
@@ -177,6 +178,9 @@ const TutorLogin = () => {
                     </p>
                 </GlassCard>
             </div>
+
+            {/* Footer */}
+            <Footer />
 
             {/* Add shake animation */}
             <style jsx>{`

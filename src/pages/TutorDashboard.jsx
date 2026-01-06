@@ -7,6 +7,7 @@ import { isExpired } from '../utils';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Footer from '../components/Footer';
 
 const SUBJECTS = [
     "Civics EOC", "Biology EOC", "Algebra 1 EOC", "Geometry EOC",
@@ -223,12 +224,12 @@ const TutorDashboard = () => {
                 {/* Success/Error Messages */}
                 {message && (
                     <div className={`mb-6 animate-slide-down ${message === 'success' || message === 'tutor-added'
-                            ? 'glassmorphic border-green-400/50'
-                            : 'glassmorphic border-red-400/50'
+                        ? 'glassmorphic border-green-400/50'
+                        : 'glassmorphic border-red-400/50'
                         } p-4 rounded-xl border`}>
                         <p className={`text-center font-medium ${message === 'success' || message === 'tutor-added'
-                                ? 'text-green-300'
-                                : 'text-red-300'
+                            ? 'text-green-300'
+                            : 'text-red-300'
                             }`}>
                             {message === 'success' && '✓ Settings saved successfully!'}
                             {message === 'tutor-added' && '✓ Tutor account created successfully!'}
@@ -325,13 +326,13 @@ const TutorDashboard = () => {
                                     <label
                                         key={subject}
                                         className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedSubjects.includes(subject)
-                                                ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-2 border-purple-400/50'
-                                                : 'bg-white/5 border-2 border-white/10 hover:bg-white/10'
+                                            ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-2 border-purple-400/50'
+                                            : 'bg-white/5 border-2 border-white/10 hover:bg-white/10'
                                             }`}
                                     >
                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${selectedSubjects.includes(subject)
-                                                ? 'bg-gradient-to-br from-purple-500 to-pink-500'
-                                                : 'bg-white/10 border-2 border-white/20'
+                                            ? 'bg-gradient-to-br from-purple-500 to-pink-500'
+                                            : 'bg-white/10 border-2 border-white/20'
                                             }`}>
                                             {selectedSubjects.includes(subject) && <Check size={16} className="text-white" />}
                                         </div>
@@ -367,8 +368,8 @@ const TutorDashboard = () => {
                                                         key={slot}
                                                         onClick={() => handleSlotToggle(day, slot)}
                                                         className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${isSelected
-                                                                ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-glow-sm'
-                                                                : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/10'
+                                                            ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-glow-sm'
+                                                            : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/10'
                                                             }`}
                                                     >
                                                         {slot}
@@ -483,14 +484,14 @@ const TutorDashboard = () => {
                                         <div
                                             key={d}
                                             className={`min-h-[100px] p-3 rounded-xl transition-all ${daySessions.length > 0
-                                                    ? 'bg-gradient-to-br from-green-500/20 to-teal-500/20 border-2 border-green-400/30'
-                                                    : 'bg-white/5 border-2 border-white/10'
+                                                ? 'bg-gradient-to-br from-green-500/20 to-teal-500/20 border-2 border-green-400/30'
+                                                : 'bg-white/5 border-2 border-white/10'
                                                 }`}
                                         >
                                             <div className="flex justify-end mb-2">
                                                 <span className={`text-sm font-semibold ${isToday
-                                                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white w-7 h-7 flex items-center justify-center rounded-full'
-                                                        : 'text-white/80'
+                                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white w-7 h-7 flex items-center justify-center rounded-full'
+                                                    : 'text-white/80'
                                                     }`}>
                                                     {d}
                                                 </span>
@@ -517,6 +518,9 @@ const TutorDashboard = () => {
                         </div>
                     </GlassCard>
                 </div>
+
+                {/* Footer */}
+                <Footer />
             </div>
 
             {/* Custom scrollbar styles */}

@@ -2,22 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Search, Calendar, User, ArrowLeft, X, BookOpen, Clock, Sparkles } from 'lucide-react';
+import { Search, Calendar, User, ArrowLeft, X, BookOpen, Clock, Sparkles, Calculator, Beaker, MessageSquare, Brain } from 'lucide-react';
 import { getNextSessionDate, isExpired } from '../utils';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-const SUBJECTS = [
-    "Civics EOC", "Biology EOC", "Algebra 1 EOC", "Geometry EOC",
-    "AP Pre-Calculus", "AP Calculus AB", "AICE Geography", "AP World History",
-    "APUSH", "FAST ELA Grade 10", "AICE Spanish", "Eighth Grade Science Exam",
-    "AICE Psychology", "AICE Marine Science"
-];
+import SkeletonLoader from '../components/SkeletonLoader';
+import Confetti from '../components/Confetti';
+import Footer from '../components/Footer';
+import { CATEGORIES, SUBJECTS, getSubjectsByCategory } from '../data/SubjectCategories';
 
 const StudentPortal = () => {
     const navigate = useNavigate();
-    const [selectedSubject, setSelectedSubject] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedSubject, setSelectedSubject] = useState(null);
     const [tutors, setTutors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
@@ -26,6 +24,19 @@ const StudentPortal = () => {
     const [isBooking, setIsBooking] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(false);
 
+    const filteredSubjects = getSubjectsByCategory(selectedCategory);
+
+    const getIconComponent = (iconName) => {
+        const iconMap = {
+            'calculator': Calculator,
+            'book-open': BookOpen,
+            'beaker': Beaker,
+            'message-square': MessageSquare,
+            'brain': Brain
+        };
+        return iconMap[iconName] || BookOpen;
+    };
+
     const handleSearch = async () => {
         if (!selectedSubject) return;
         setLoading(true);
@@ -33,7 +44,7 @@ const StudentPortal = () => {
         setTutors([]);
 
         try {
-            const q = query(collection(db, 'tutors'), where('subjects', 'array-contains', selectedSubject));
+            const q = query(collection(db, 'tutors'), where('subjects', 'array-contains', selectedSubject.name));
             const querySnapshot = await getDocs(q);
             const results = [];
             querySnapshot.forEach((doc) => {
@@ -45,6 +56,10 @@ const StudentPortal = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSubjectSelect = (subject) => {
+        setSelectedSubject(subject);
     };
 
     const openBookingModal = (tutor, slot) => {
@@ -108,7 +123,7 @@ const StudentPortal = () => {
                 setBookingSlot(null);
                 setBookingSuccess(false);
                 handleSearch();
-            }, 2000);
+            }, 3000);
         } catch (error) {
             console.error("Booking error:", error);
             alert("Failed to book session. Please try again.");
@@ -135,57 +150,97 @@ const StudentPortal = () => {
 
                 {/* Header */}
                 <div className="text-center mb-12 animate-slide-up">
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        Find Your <span className="gradient-text">Perfect Tutor</span>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ letterSpacing: '0.01em' }}>
+                        <span className="font-light" style={{ color: '#CBD5E1' }}>Find Your</span>{' '}
+                        <span className="gradient-text font-bold">Perfect Tutor</span>
                     </h1>
-                    <p className="text-white/80 text-lg">Search by subject and book a session with expert peer tutors</p>
+                    <p style={{ color: '#94A3B8', fontSize: '17px', fontWeight: 400, lineHeight: 1.5 }}>
+                        Select a subject and book a session with expert peer tutors
+                    </p>
                 </div>
 
-                {/* Search Section */}
-                <div className="mb-12 animate-slide-up" style={{ animationDelay: '100ms' }}>
-                    <GlassCard hover={false}>
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1 relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" size={20} />
-                                <select
-                                    value={selectedSubject}
-                                    onChange={(e) => setSelectedSubject(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm appearance-none cursor-pointer"
-                                >
-                                    <option value="" className="text-gray-900">-- Select a Subject --</option>
-                                    {SUBJECTS.map(s => <option key={s} value={s} className="text-gray-900">{s}</option>)}
-                                </select>
-                            </div>
-                            <Button
-                                onClick={handleSearch}
-                                disabled={!selectedSubject || loading}
-                                variant="primary"
-                                size="lg"
-                                className="md:w-auto whitespace-nowrap"
+                {/* Section Divider */}
+                <div className="section-divider"></div>
+
+                {/* Category Tabs */}
+                <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+                    <div className="category-tabs">
+                        {CATEGORIES.map(category => (
+                            <button
+                                key={category.id}
+                                onClick={() => setSelectedCategory(category.id)}
+                                className={`tab-button ${selectedCategory === category.id ? 'active' : ''}`}
                             >
-                                {loading ? (
-                                    <div className="flex items-center gap-2">
-                                        <LoadingSpinner size="sm" />
-                                        <span>Searching...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <Search size={20} />
-                                        <span>Search Tutors</span>
-                                    </div>
-                                )}
-                            </Button>
-                        </div>
-                    </GlassCard>
+                                {category.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Subject Cards Grid */}
+                    <div className="subjects-grid">
+                        {filteredSubjects.map((subject) => {
+                            const IconComponent = getIconComponent(subject.icon);
+                            const isSelected = selectedSubject?.id === subject.id;
+
+                            return (
+                                <div
+                                    key={subject.id}
+                                    onClick={() => handleSubjectSelect(subject)}
+                                    className={`subject-card ${isSelected ? 'selected' : ''}`}
+                                >
+                                    {subject.badge && (
+                                        <span className={`subject-badge ${subject.badge.toLowerCase()}`}>
+                                            {subject.badge}
+                                        </span>
+                                    )}
+                                    <IconComponent className="subject-card-icon" style={{
+                                        background: 'linear-gradient(135deg, #0EA5E9, #3B82F6)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        backgroundClip: 'text'
+                                    }} />
+                                    <span className="subject-card-name">{subject.name}</span>
+                                    <span className="tutor-count">{subject.tutorCount} tutors available</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Search Button */}
+                    <div className="flex justify-center mt-8">
+                        <Button
+                            onClick={handleSearch}
+                            disabled={!selectedSubject || loading}
+                            variant="primary"
+                            size="lg"
+                            className="px-8"
+                        >
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <LoadingSpinner size="sm" />
+                                    <span>Searching...</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <Search size={20} />
+                                    <span>Search Tutors</span>
+                                </div>
+                            )}
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Results */}
                 <div className="space-y-6">
+                    {/* Skeleton Loaders during search */}
+                    {loading && (
+                        <SkeletonLoader variant="card" count={2} />
+                    )}
                     {hasSearched && tutors.length === 0 && !loading && (
                         <div className="text-center py-16 animate-fade-in">
                             <GlassCard hover={false}>
                                 <BookOpen className="mx-auto mb-4 text-white/50" size={48} />
-                                <p className="text-white/70 text-lg">No tutors found for <span className="font-semibold text-white">{selectedSubject}</span></p>
+                                <p className="text-white/70 text-lg">No tutors found for <span className="font-semibold text-white">{selectedSubject?.name}</span></p>
                                 <p className="text-white/50 text-sm mt-2">Try selecting a different subject</p>
                             </GlassCard>
                         </div>
@@ -225,7 +280,7 @@ const StudentPortal = () => {
                                         </div>
                                         <div className="glassmorphic px-4 py-2 rounded-xl border border-white/20 flex items-center gap-2">
                                             <Sparkles size={16} className="text-yellow-300" />
-                                            <span className="text-white font-medium">{selectedSubject}</span>
+                                            <span className="text-white font-medium">{selectedSubject?.name}</span>
                                         </div>
                                     </div>
 
@@ -293,6 +348,8 @@ const StudentPortal = () => {
                                     </div>
                                     <h3 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h3>
                                     <p className="text-white/70">Your session has been scheduled successfully</p>
+                                    {/* Confetti celebration */}
+                                    <Confetti duration={3000} particleCount={60} />
                                 </div>
                             ) : (
                                 <>
@@ -306,7 +363,7 @@ const StudentPortal = () => {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-white/70">Subject:</span>
-                                            <span className="text-white font-semibold">{selectedSubject}</span>
+                                            <span className="text-white font-semibold">{selectedSubject?.name}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-white/70">Time:</span>
@@ -372,6 +429,9 @@ const StudentPortal = () => {
                     </div>
                 </div>
             )}
+
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };

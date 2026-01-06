@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import LandingPage from './components/LandingPage';
-import TutorLogin from './components/TutorLogin';
-import TutorDashboard from './components/TutorDashboard';
-import StudentPortal from './components/StudentPortal';
+import LandingPage from './pages/LandingPage';
+import TutorLogin from './pages/TutorLogin';
+import TutorDashboard from './pages/TutorDashboard';
+import StudentPortal from './pages/StudentPortal';
 
 function App() {
   return (

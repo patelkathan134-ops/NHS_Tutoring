@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, BookOpen, Sparkles } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
+import ParticleField from '../components/ParticleField';
+import Footer from '../components/Footer';
 import logo from '../assets/logo.png';
 
 const LandingPage = () => {
@@ -14,6 +16,9 @@ const LandingPage = () => {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+            {/* Particle Field Background */}
+            <ParticleField density={40} />
+
             {/* Animated background orbs */}
             <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
             <div className="absolute top-40 right-10 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '1s' }}></div>
@@ -139,11 +144,8 @@ const LandingPage = () => {
                 </GlassCard>
             </div>
 
-            {/* Footer text */}
-            <div className={`mt-16 text-center text-white/60 text-sm transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100' : 'opacity-0'
-                }`}>
-                <p>Lakewood Ranch Prep • National Honor Society</p>
-            </div>
+            {/* Footer */}
+            <Footer />
         </div>
     );
 };
