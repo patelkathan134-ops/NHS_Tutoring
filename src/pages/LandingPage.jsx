@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, BookOpen } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const LandingPage = () => {
     const navigate = useNavigate();
@@ -8,6 +9,7 @@ const LandingPage = () => {
     return (
         <div className="flex flex-col items-center justify-center min-h-[80vh] gap-8">
             <div className="text-center max-w-2xl mb-8">
+                <img src={logo} alt="School Logo" className="h-32 mx-auto mb-6" />
                 <h2 className="text-4xl font-extrabold text-school-navy mb-4">Welcome to the NHS Tutoring Portal</h2>
                 <p className="text-lg text-gray-600">Connecting students with peer tutors for academic success.</p>
             </div>

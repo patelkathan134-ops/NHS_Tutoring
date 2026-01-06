@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { Lock } from 'lucide-react';
 
 const ALLOWED_TUTORS = [
@@ -17,15 +19,38 @@ const TutorLogin = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        const tutor = ALLOWED_TUTORS.find(t => t.id === tutorId && t.pass === password);
+        setError('');
 
-        if (tutor) {
-            localStorage.setItem('currentTutor', tutorId);
-            navigate('/tutor-dashboard');
-        } else {
+        try {
+            // 1. Check Firestore first for dynamic/updated tutors
+            const tutorRef = doc(db, 'tutors', tutorId);
+            const tutorSnap = await getDoc(tutorRef);
+
+            if (tutorSnap.exists() && tutorSnap.data().password) {
+                if (tutorSnap.data().password === password) {
+                    localStorage.setItem('currentTutor', tutorId);
+                    navigate('/tutor-dashboard');
+                    return;
+                } else {
+                    setError('Invalid Password');
+                    return;
+                }
+            }
+
+            // 2. Fallback to Legacy Hardcoded List
+            const legacyTutor = ALLOWED_TUTORS.find(t => t.id === tutorId && t.pass === password);
+            if (legacyTutor) {
+                localStorage.setItem('currentTutor', tutorId);
+                navigate('/tutor-dashboard');
+                return;
+            }
+
             setError('Invalid Tutor ID or Password');
+        } catch (err) {
+            console.error("Login error:", err);
+            setError('Login failed. Please try again.');
         }
     };
 
