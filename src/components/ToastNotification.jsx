@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 const ToastNotification = ({
@@ -9,6 +9,13 @@ const ToastNotification = ({
 }) => {
     const [isExiting, setIsExiting] = useState(false);
     const [progress, setProgress] = useState(100);
+
+    const handleClose = useCallback(() => {
+        setIsExiting(true);
+        setTimeout(() => {
+            if (onClose) onClose();
+        }, 300);
+    }, [onClose]);
 
     useEffect(() => {
         // Progress bar animation
@@ -28,14 +35,7 @@ const ToastNotification = ({
             clearInterval(interval);
             clearTimeout(timer);
         };
-    }, [duration]);
-
-    const handleClose = () => {
-        setIsExiting(true);
-        setTimeout(() => {
-            if (onClose) onClose();
-        }, 300);
-    };
+    }, [duration, handleClose]);
 
     const variants = {
         success: {

@@ -480,7 +480,6 @@ const TutorDashboard = () => {
 
                                 // Actual days
                                 for (let d = 1; d <= daysInMonth; d++) {
-                                    const dateObj = new Date(year, month, d);
                                     const isToday = d === new Date().getDate() &&
                                         month === new Date().getMonth() &&
                                         year === new Date().getFullYear();
