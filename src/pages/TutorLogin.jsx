@@ -182,17 +182,6 @@ const TutorLogin = () => {
             {/* Footer */}
             <Footer />
 
-            {/* Add shake animation */}
-            <style jsx>{`
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-10px); }
-                    75% { transform: translateX(10px); }
-                }
-                .animate-shake {
-                    animation: shake 0.3s ease-in-out;
-                }
-            `}</style>
         </div>
     );
 };

@@ -117,21 +117,6 @@ export default function Button({
                 {icon && iconPosition === 'right' && <span>{icon}</span>}
             </span>
 
-            <style jsx>{`
-                @keyframes ripple {
-                    0% {
-                        transform: scale(0);
-                        opacity: 1;
-                    }
-                    100% {
-                        transform: scale(4);
-                        opacity: 0;
-                    }
-                }
-                .animate-ripple {
-                    animation: ripple 600ms ease-out;
-                }
-            `}</style>
         </button>
     );
 }
