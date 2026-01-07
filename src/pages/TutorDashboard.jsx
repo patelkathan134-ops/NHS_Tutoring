@@ -8,6 +8,7 @@ import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
+import SlotCreationForm from '../components/TutorDashboard/SlotCreationForm';
 
 const SUBJECTS = [
     "Civics EOC", "Biology EOC", "Algebra 1 EOC", "Geometry EOC",
@@ -16,19 +17,14 @@ const SUBJECTS = [
     "AICE Psychology", "AICE Marine Science"
 ];
 
-const WEEK_SCHEDULE = [
-    { day: 'Monday', slots: ['7:00-7:45 AM', '2:45-3:45 PM', '3:45-4:45 PM'] },
-    { day: 'Tuesday', slots: ['7:00-7:45 AM', '2:45-3:45 PM', '3:45-4:45 PM'] },
-    { day: 'Wednesday', slots: ['2:45-3:45 PM', '3:45-4:45 PM'] },
-    { day: 'Thursday', slots: ['7:00-7:45 AM', '2:45-3:45 PM', '3:45-4:45 PM'] },
-];
 
 const TutorDashboard = () => {
     const navigate = useNavigate();
     const tutorId = localStorage.getItem('currentTutor');
 
     const [selectedSubjects, setSelectedSubjects] = useState([]);
-    const [availability, setAvailability] = useState({});
+    const [mySlots, setMySlots] = useState([]);
+
     const [bookedSlots, setBookedSlots] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [loading, setLoading] = useState(true);
@@ -85,10 +81,12 @@ const TutorDashboard = () => {
                     setGradeLevel(data.gradeLevel || '');
 
                     const allSlots = data.slots || [];
+                    setMySlots(allSlots);
                     const booked = allSlots.filter(s => s.status === 'Booked' && !isExpired(s.expiryDate));
                     setBookedSlots(booked);
                 }
             }
+
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -104,43 +102,20 @@ const TutorDashboard = () => {
         );
     };
 
-    const handleSlotToggle = (day, slot) => {
-        const key = `${day}-${slot}`;
-        setAvailability(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
-    };
+
 
     const handleSave = async () => {
         setSaving(true);
         setMessage('');
-
-        const slotsList = [];
-        Object.entries(availability).forEach(([key, isAvailable]) => {
-            if (isAvailable) {
-                const firstDashIndex = key.indexOf('-');
-                const day = key.substring(0, firstDashIndex);
-                const time = key.substring(firstDashIndex + 1);
-                slotsList.push({
-                    day,
-                    time,
-                    status: 'Available',
-                    studentName: null,
-                    id: key
-                });
-            }
-        });
 
         try {
             await setDoc(doc(db, 'tutors', tutorId), {
                 name: tutorId,
                 subjects: selectedSubjects,
                 bio: bio,
-                gradeLevel: gradeLevel,
-                rawAvailability: availability,
-                slots: slotsList
+                gradeLevel: gradeLevel
             }, { merge: true });
+
             setMessage('success');
             setTimeout(() => setMessage(''), 3000);
         } catch (error) {
@@ -346,65 +321,103 @@ const TutorDashboard = () => {
                                     </label>
                                 ))}
                             </div>
-                        </GlassCard>
-                    </div>
 
-                    {/* Availability Schedule */}
-                    <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
-                        <GlassCard hover={false}>
-                            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                                <Calendar size={24} />
-                                Weekly Availability
-                            </h3>
-                            <div className="space-y-6">
-                                {WEEK_SCHEDULE.map(({ day, slots }) => (
-                                    <div key={day}>
-                                        <h4 className="text-white font-semibold mb-3 text-lg">{day}</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {slots.map(slot => {
-                                                const isSelected = availability[`${day}-${slot}`];
-                                                return (
-                                                    <button
-                                                        key={slot}
-                                                        onClick={() => handleSlotToggle(day, slot)}
-                                                        className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${isSelected
-                                                            ? 'bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-glow-sm'
-                                                            : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/10'
-                                                            }`}
-                                                    >
-                                                        {slot}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
+                            {/* Save Button moved here as it primarily relates to profile/subjects now */}
+                            <div className="mt-8 pt-4 border-t border-white/10">
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    variant="primary"
+                                    className="w-full flex items-center justify-center gap-2"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <LoadingSpinner size="sm" />
+                                            <span>Saving Profile...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={20} />
+                                            <span>Save Profile & Subjects</span>
+                                        </>
+                                    )}
+                                </Button>
                             </div>
                         </GlassCard>
                     </div>
-                </div>
 
-                {/* Save Button */}
-                <div className="mb-8 flex justify-end animate-fade-in">
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        variant="primary"
-                        size="lg"
-                        className="flex items-center gap-2 min-w-[200px] justify-center"
-                    >
-                        {saving ? (
-                            <>
-                                <LoadingSpinner size="sm" />
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Save size={20} />
-                                <span>Save Changes</span>
-                            </>
-                        )}
-                    </Button>
+                    {/* New Slot Creation & List */}
+                    <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+                        <GlassCard hover={false}>
+                            <SlotCreationForm
+                                tutorId={tutorId}
+                                onSlotCreated={() => {
+                                    fetchTutorData(); // Refresh list
+                                    setMessage('success');
+                                    setTimeout(() => setMessage(''), 3000);
+                                }}
+                            />
+                        </GlassCard>
+
+                        {/* Active Availability List */}
+                        <div className="mt-8">
+                            <GlassCard hover={false}>
+                                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                    <Calendar size={20} />
+                                    My Active Availability
+                                </h3>
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                                    {(!mySlots || mySlots.filter(s => s.status !== 'Booked').length === 0) && (
+                                        <p className="text-white/50 text-center py-4">No active slots created.</p>
+                                    )}
+                                    {mySlots && mySlots.map((slot, idx) => {
+                                        // Only show Available slots here (Booked ones are on the calendar)
+                                        if (slot.status === 'Booked') return null;
+
+                                        return (
+                                            <div key={idx} className="bg-white/5 border border-white/10 p-3 rounded-lg flex justify-between items-center group hover:bg-white/10 transition-colors">
+                                                <div>
+                                                    <div className="text-white font-semibold flex items-center gap-2">
+                                                        {slot.slotType === 'specific_date' ? (
+                                                            <span className="text-blue-300 text-xs px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30">Specific Date</span>
+                                                        ) : (
+                                                            <span className="text-purple-300 text-xs px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30">Weekly</span>
+                                                        )}
+                                                        <span>{slot.startTime} - {slot.endTime}</span>
+                                                    </div>
+                                                    <div className="text-white/60 text-sm mt-1">
+                                                        {slot.slotType === 'recurring' ? (
+                                                            <>Every {slot.dayOfWeek}</>
+                                                        ) : (
+                                                            <>{new Date(slot.specificDate).toLocaleDateString()}</>
+                                                        )}
+                                                        <span className="mx-2">•</span>
+                                                        {slot.subject}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!window.confirm('Delete this slot?')) return;
+                                                        try {
+                                                            const newSlots = mySlots.filter(s => s !== slot);
+                                                            await setDoc(doc(db, 'tutors', tutorId), { slots: newSlots }, { merge: true });
+                                                            fetchTutorData(); // Refresh
+                                                        } catch (e) {
+                                                            console.error("Error deleting slot", e);
+                                                        }
+                                                    }}
+                                                    className="text-white/20 hover:text-red-400 transition-colors p-2"
+                                                    title="Delete Slot"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </GlassCard>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Calendar */}
