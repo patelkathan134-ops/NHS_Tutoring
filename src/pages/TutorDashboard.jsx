@@ -64,7 +64,7 @@ const TutorDashboard = () => {
                 if (myDocSnap.exists()) {
                     const data = myDocSnap.data();
                     setSelectedSubjects(data.subjects || []);
-                    setAvailability(data.rawAvailability || {});
+                    // setAvailability(data.rawAvailability || {}); // Removed as part of new slot logic
                     setBio(data.bio || '');
                     setGradeLevel(data.gradeLevel || '');
                 }
@@ -76,7 +76,7 @@ const TutorDashboard = () => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setSelectedSubjects(data.subjects || []);
-                    setAvailability(data.rawAvailability || {});
+                    // setAvailability(data.rawAvailability || {}); // Removed as part of new slot logic
                     setBio(data.bio || '');
                     setGradeLevel(data.gradeLevel || '');
 
@@ -537,22 +537,7 @@ const TutorDashboard = () => {
             </div>
 
             {/* Custom scrollbar styles */}
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(168, 85, 247, 0.5);
-                    border-radius: 10px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(168, 85, 247, 0.7);
-                }
-            `}</style>
+
         </div>
     );
 };
