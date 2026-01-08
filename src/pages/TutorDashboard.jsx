@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Save, LogOut, Calendar, BookOpen, User, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
-import { isExpired } from '../utils';
+import { isExpired } from '../utils/dateUtils';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
 import SlotCreationForm from '../components/TutorDashboard/SlotCreationForm';
+import DashboardCalendar from '../components/TutorDashboard/DashboardCalendar';
 
 const SUBJECTS = [
     "Civics EOC", "Biology EOC", "Algebra 1 EOC", "Geometry EOC",
@@ -26,8 +27,9 @@ const TutorDashboard = () => {
     const [mySlots, setMySlots] = useState([]);
 
     const [bookedSlots, setBookedSlots] = useState([]);
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [availableSlots, setAvailableSlots] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
     const [bio, setBio] = useState('');
@@ -81,14 +83,17 @@ const TutorDashboard = () => {
                     setGradeLevel(data.gradeLevel || '');
 
                     const allSlots = data.slots || [];
-                    setMySlots(allSlots);
+                    setMySlots(allSlots); // Keep for "My Active Availability" list
                     const booked = allSlots.filter(s => s.status === 'Booked' && !isExpired(s.expiryDate));
                     setBookedSlots(booked);
+                    const available = allSlots.filter(s => s.status === 'Available' && !isExpired(s.expiryDate));
+                    setAvailableSlots(available);
                 }
             }
 
         } catch (error) {
             console.error("Error fetching data:", error);
+            setError(error);
         } finally {
             setLoading(false);
         }
@@ -169,6 +174,14 @@ const TutorDashboard = () => {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-red-400">
+                Error loading data: {error.message}
             </div>
         );
     }
@@ -351,6 +364,7 @@ const TutorDashboard = () => {
                         <GlassCard hover={false}>
                             <SlotCreationForm
                                 tutorId={tutorId}
+                                selectedSubjects={selectedSubjects}
                                 onSlotCreated={() => {
                                     fetchTutorData(); // Refresh list
                                     setMessage('success');
@@ -389,7 +403,7 @@ const TutorDashboard = () => {
                                                         {slot.slotType === 'recurring' ? (
                                                             <>Every {slot.dayOfWeek}</>
                                                         ) : (
-                                                            <>{new Date(slot.specificDate).toLocaleDateString()}</>
+                                                            <>{slot.specificDate ? new Date(slot.specificDate).toLocaleDateString() : 'Specific Date'}</>
                                                         )}
                                                         <span className="mx-2">•</span>
                                                         {slot.subject}
@@ -428,116 +442,22 @@ const TutorDashboard = () => {
                                 <Calendar size={28} />
                                 My Calendar
                             </h3>
-                            <div className="flex items-center gap-4 glassmorphic px-4 py-2 rounded-xl">
-                                <button
-                                    onClick={() => {
-                                        const newDate = new Date(currentDate);
-                                        newDate.setMonth(newDate.getMonth() - 1);
-                                        setCurrentDate(newDate);
-                                    }}
-                                    className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <span className="font-bold text-lg text-white min-w-[180px] text-center">
-                                    {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                                </span>
-                                <button
-                                    onClick={() => {
-                                        const newDate = new Date(currentDate);
-                                        newDate.setMonth(newDate.getMonth() + 1);
-                                        setCurrentDate(newDate);
-                                    }}
-                                    className="text-white/80 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
                         </div>
 
-                        {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 gap-2">
-                            {/* Headers */}
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="text-center py-3 text-white/70 font-semibold text-sm">
-                                    {day}
-                                </div>
-                            ))}
-
-                            {/* Days */}
-                            {(() => {
-                                const year = currentDate.getFullYear();
-                                const month = currentDate.getMonth();
-                                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                                const firstDayOfMonth = new Date(year, month, 1).getDay();
-
-                                const days = [];
-
-                                // Empty slots
-                                for (let i = 0; i < firstDayOfMonth; i++) {
-                                    days.push(<div key={`empty-${i}`} className="min-h-[100px] bg-white/5 rounded-xl" />);
-                                }
-
-                                // Actual days
-                                for (let d = 1; d <= daysInMonth; d++) {
-                                    const isToday = d === new Date().getDate() &&
-                                        month === new Date().getMonth() &&
-                                        year === new Date().getFullYear();
-
-                                    const daySessions = bookedSlots.filter(s => {
-                                        if (!s.expiryDate) return false;
-                                        const sessionDate = new Date(s.expiryDate);
-                                        return sessionDate.getDate() === d &&
-                                            sessionDate.getMonth() === month &&
-                                            sessionDate.getFullYear() === year;
-                                    });
-
-                                    days.push(
-                                        <div
-                                            key={d}
-                                            className={`min-h-[100px] p-3 rounded-xl transition-all ${daySessions.length > 0
-                                                ? 'bg-gradient-to-br from-green-500/20 to-teal-500/20 border-2 border-green-400/30'
-                                                : 'bg-white/5 border-2 border-white/10'
-                                                }`}
-                                        >
-                                            <div className="flex justify-end mb-2">
-                                                <span className={`text-sm font-semibold ${isToday
-                                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white w-7 h-7 flex items-center justify-center rounded-full'
-                                                    : 'text-white/80'
-                                                    }`}>
-                                                    {d}
-                                                </span>
-                                            </div>
-                                            <div className="space-y-1">
-                                                {daySessions.map(session => (
-                                                    <div
-                                                        key={session.id}
-                                                        className="text-xs bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-sm border border-purple-400/30 text-white p-2 rounded-lg"
-                                                    >
-                                                        <div className="font-bold truncate">{session.studentName || 'Student'}</div>
-                                                        <div className="text-white/70 truncate text-[10px]">{session.subject || 'No Subject'}</div>
-                                                        <div className="text-white/60 text-[10px]">{session.time}</div>
-                                                        {session.tutorName && <div className="text-white/50 text-[10px] italic">{session.tutorName}</div>}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                }
-
-                                return days;
-                            })()}
+                        {/* SAFE Calendar Grid Component */}
+                        <div className="mt-8">
+                            <DashboardCalendar bookedSlots={bookedSlots} availableSlots={availableSlots} />
                         </div>
                     </GlassCard>
                 </div>
 
                 {/* Footer */}
                 <Footer />
-            </div>
+            </div >
 
             {/* Custom scrollbar styles */}
 
-        </div>
+        </div >
     );
 };
 

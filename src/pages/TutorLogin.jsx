@@ -32,29 +32,35 @@ const TutorLogin = () => {
         setLoading(true);
 
         try {
-            // 1. Check Firestore first for dynamic/updated tutors
-            const tutorRef = doc(db, 'tutors', tutorId);
-            const tutorSnap = await getDoc(tutorRef);
-
-            if (tutorSnap.exists() && tutorSnap.data().password) {
-                if (tutorSnap.data().password === password) {
-                    localStorage.setItem('currentTutor', tutorId);
-                    navigate('/tutor-dashboard');
-                    return;
-                } else {
-                    setError('Invalid Password');
-                    triggerShake();
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            // 2. Fallback to Legacy Hardcoded List
+            // 1. Check Legacy Hardcoded List First (to avoid Firebase permission issues)
             const legacyTutor = ALLOWED_TUTORS.find(t => t.id === tutorId && t.pass === password);
             if (legacyTutor) {
                 localStorage.setItem('currentTutor', tutorId);
                 navigate('/tutor-dashboard');
+                setLoading(false);
                 return;
+            }
+
+            // 2. Try Firestore for dynamic/updated tutors (if hardcoded check fails)
+            try {
+                const tutorRef = doc(db, 'tutors', tutorId);
+                const tutorSnap = await getDoc(tutorRef);
+
+                if (tutorSnap.exists() && tutorSnap.data().password) {
+                    if (tutorSnap.data().password === password) {
+                        localStorage.setItem('currentTutor', tutorId);
+                        navigate('/tutor-dashboard');
+                        return;
+                    } else {
+                        setError('Invalid Password');
+                        triggerShake();
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } catch (firebaseErr) {
+                // Silently handle Firebase errors (permissions, network, etc.)
+                console.warn("Firebase check failed:", firebaseErr);
             }
 
             setError('Invalid Tutor ID or Password');

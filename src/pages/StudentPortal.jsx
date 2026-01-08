@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Search, Calendar, User, ArrowLeft, X, BookOpen, Clock, Sparkles, Calculator, Beaker, MessageSquare, Brain } from 'lucide-react';
-import { getNextSessionDate, isExpired } from '../utils';
+import { getNextSessionDate, isExpired } from '../utils/dateUtils';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';

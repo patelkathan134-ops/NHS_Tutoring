@@ -94,9 +94,24 @@ export function formatDisplayDate(isoDate) {
  * @param {string} endTime - "3:45 PM"
  * @returns {Date}
  */
+/**
+ * Calculate expiry date based on date and end time
+ * @param {Date} startDate - Start date/time of session
+ * @param {string} endTime - "3:45 PM"
+ * @returns {Date}
+ */
 export function calculateExpiryDate(startDate, endTime) {
     const expiryDate = new Date(startDate);
     const [hours, minutes] = convertTo24Hour(endTime);
     expiryDate.setHours(hours, minutes, 0, 0);
     return expiryDate;
+}
+
+// Aliases for compatibility with other components
+export const isExpired = isSlotExpired;
+
+export function getNextSessionDate(day, timeRange) {
+    // Extract start time from range e.g. "2:45 PM-3:45 PM" -> "2:45 PM"
+    const startTime = timeRange.includes('-') ? timeRange.split('-')[0].trim() : timeRange;
+    return getNextDayOfWeek(day, startTime);
 }
