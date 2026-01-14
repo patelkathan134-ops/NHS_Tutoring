@@ -8,21 +8,19 @@ import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
+import { useSubjects } from '../hooks/useSubjects';
+import AdminPanel from '../components/TutorDashboard/AdminPanel';
 import SlotCreationForm from '../components/TutorDashboard/SlotCreationForm';
 import DashboardCalendar from '../components/TutorDashboard/DashboardCalendar';
 
-const SUBJECTS = [
-    "Civics EOC", "Biology EOC", "Algebra 1 EOC", "Geometry EOC",
-    "AP Pre-Calculus", "AP Calculus AB", "AICE Geography", "AP World History",
-    "APUSH", "FAST ELA Grade 10", "AICE Spanish", "Eighth Grade Science Exam",
-    "AICE Psychology", "AICE Marine Science"
-];
+
 
 
 const TutorDashboard = () => {
     const navigate = useNavigate();
     const tutorId = localStorage.getItem('currentTutor');
 
+    const { subjects, loading: subjectsLoading } = useSubjects();
     const [selectedSubjects, setSelectedSubjects] = useState([]);
     const [mySlots, setMySlots] = useState([]);
 
@@ -34,10 +32,7 @@ const TutorDashboard = () => {
     const [message, setMessage] = useState('');
     const [bio, setBio] = useState('');
     const [gradeLevel, setGradeLevel] = useState('');
-    const [newTutorName, setNewTutorName] = useState('');
-    const [newTutorPassword, setNewTutorPassword] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
-    const [newTutorIsAdmin, setNewTutorIsAdmin] = useState(false);
 
     useEffect(() => {
         if (!tutorId) {
@@ -137,48 +132,14 @@ const TutorDashboard = () => {
         }
     };
 
-    const handleAddTutor = async (e) => {
-        e.preventDefault();
-        setMessage('');
-        if (!newTutorName || !newTutorPassword) return;
 
-        try {
-            const newTutorRef = doc(db, 'tutors', newTutorName);
-            const snap = await getDoc(newTutorRef);
-
-            if (snap.exists()) {
-                alert('A tutor with this name already exists.');
-                return;
-            }
-
-            await setDoc(newTutorRef, {
-                name: newTutorName,
-                password: newTutorPassword,
-                subjects: [],
-                slots: [],
-                bio: '',
-                gradeLevel: '',
-                rawAvailability: {},
-                isAdmin: newTutorIsAdmin
-            });
-
-            setMessage(newTutorIsAdmin ? 'admin-added' : 'tutor-added');
-            setNewTutorIsAdmin(false);
-            setNewTutorName('');
-            setNewTutorPassword('');
-            setTimeout(() => setMessage(''), 3000);
-        } catch (error) {
-            console.error("Error creating tutor:", error);
-            setMessage('error');
-        }
-    };
 
     const handleLogout = () => {
         localStorage.removeItem('currentTutor');
         navigate('/');
     };
 
-    if (loading) {
+    if (loading || subjectsLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <LoadingSpinner size="lg" />
@@ -228,8 +189,6 @@ const TutorDashboard = () => {
                             : 'text-red-300'
                             }`}>
                             {message === 'success' && '✓ Settings saved successfully!'}
-                            {message === 'tutor-added' && '✓ Tutor account created successfully!'}
-                            {message === 'admin-added' && '✓ Admin account created successfully!'}
                             {message === 'error' && '✗ An error occurred. Please try again.'}
                         </p>
                     </div>
@@ -237,50 +196,10 @@ const TutorDashboard = () => {
 
                 {/* Admin Panel */}
                 {isAdmin && (
-                    <div className="mb-8 animate-slide-up">
-                        <GlassCard hover={false} className="bg-gradient-to-br from-purple-600/20 to-pink-600/20">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                <User size={24} />
-                                Admin: Add New Tutor
-                            </h3>
-                            <form onSubmit={handleAddTutor} className="flex flex-col md:flex-row gap-4">
-                                <div className="flex-1">
-                                    <label className="block text-white/90 text-sm font-medium mb-2">Full Name</label>
-                                    <input
-                                        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm"
-                                        placeholder="e.g. John Doe"
-                                        value={newTutorName}
-                                        onChange={e => setNewTutorName(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-white/90 text-sm font-medium mb-2">Password</label>
-                                    <input
-                                        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm"
-                                        type="text"
-                                        placeholder="Set password"
-                                        value={newTutorPassword}
-                                        onChange={e => setNewTutorPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="flex items-center gap-3 md:mt-auto">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={newTutorIsAdmin}
-                                            onChange={(e) => setNewTutorIsAdmin(e.target.checked)}
-                                            className="w-5 h-5 rounded bg-white/10 border border-white/20 checked:bg-purple-500 cursor-pointer"
-                                        />
-                                        <span className="text-white/90 text-sm font-medium">Make Admin</span>
-                                    </label>
-                                    <Button type="submit" variant="primary">
-                                        {newTutorIsAdmin ? 'Create Admin' : 'Create Tutor'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </GlassCard>
+                    <div className="mb-8">
+                        <AdminPanel onTutorAdded={() => {
+                            // Optional: refresh any list if needed
+                        }} />
                     </div>
                 )}
 
@@ -330,27 +249,27 @@ const TutorDashboard = () => {
                                 My Subjects
                             </h3>
                             <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                {SUBJECTS.map(subject => (
+                                {subjects.map(subject => (
                                     <label
-                                        key={subject}
-                                        className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedSubjects.includes(subject)
+                                        key={subject.id}
+                                        className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedSubjects.includes(subject.name)
                                             ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-2 border-purple-400/50'
                                             : 'bg-white/5 border-2 border-white/10 hover:bg-white/10'
                                             }`}
                                     >
-                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${selectedSubjects.includes(subject)
+                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${selectedSubjects.includes(subject.name)
                                             ? 'bg-gradient-to-br from-purple-500 to-pink-500'
                                             : 'bg-white/10 border-2 border-white/20'
                                             }`}>
-                                            {selectedSubjects.includes(subject) && <Check size={16} className="text-white" />}
+                                            {selectedSubjects.includes(subject.name) && <Check size={16} className="text-white" />}
                                         </div>
                                         <input
                                             type="checkbox"
-                                            checked={selectedSubjects.includes(subject)}
-                                            onChange={() => handleSubjectToggle(subject)}
+                                            checked={selectedSubjects.includes(subject.name)}
+                                            onChange={() => handleSubjectToggle(subject.name)}
                                             className="sr-only"
                                         />
-                                        <span className="text-white font-medium">{subject}</span>
+                                        <span className="text-white font-medium">{subject.name}</span>
                                     </label>
                                 ))}
                             </div>

@@ -11,10 +11,12 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import Confetti from '../components/Confetti';
 import Footer from '../components/Footer';
 import FileUpload from '../components/FileUpload';
-import { CATEGORIES, SUBJECTS, getSubjectsByCategory } from '../data/SubjectCategories';
+import { CATEGORIES } from '../data/SubjectCategories';
+import { useSubjects } from '../hooks/useSubjects';
 
 const StudentPortal = () => {
     const navigate = useNavigate();
+    const { subjects, loading: subjectsLoading } = useSubjects();
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [tutors, setTutors] = useState([]);
@@ -28,7 +30,9 @@ const StudentPortal = () => {
     const [isBooking, setIsBooking] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(false);
 
-    const filteredSubjects = getSubjectsByCategory(selectedCategory);
+    const filteredSubjects = selectedCategory === 'all'
+        ? subjects
+        : subjects.filter(s => s.category === selectedCategory);
 
     const getIconComponent = (iconName) => {
         const iconMap = {
@@ -283,10 +287,10 @@ const StudentPortal = () => {
                 {/* Results */}
                 <div className="space-y-6">
                     {/* Skeleton Loaders during search */}
-                    {loading && (
+                    {(loading || subjectsLoading) && (
                         <SkeletonLoader variant="card" count={2} />
                     )}
-                    {hasSearched && tutors.length === 0 && !loading && (
+                    {hasSearched && tutors.length === 0 && !loading && !subjectsLoading && (
                         <div className="text-center py-16 animate-fade-in">
                             <GlassCard hover={false}>
                                 <BookOpen className="mx-auto mb-4 text-white/50" size={48} />
