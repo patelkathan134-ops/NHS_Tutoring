@@ -335,17 +335,21 @@ const StudentPortal = () => {
 
             {/* Booking Modal */}
             {bookingSlot && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
-                    <div className="w-full max-w-md animate-scale-in my-auto">
-                        <GlassCard hover={false} className="relative max-h-[90vh] overflow-y-auto">
-                            {/* Close Button */}
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-fade-in flex items-center justify-center p-4">
+                    <div className="w-full max-w-md glassmorphic rounded-2xl flex flex-col max-h-[90vh] animate-scale-in">
+                        {/* Fixed Header */}
+                        <div className="p-6 pb-4 border-b border-white/10 flex-shrink-0">
                             <button
                                 onClick={() => setBookingSlot(null)}
-                                className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+                                className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors z-10"
                             >
                                 <X size={24} />
                             </button>
+                            <h3 className="text-2xl font-bold text-white">Confirm Booking</h3>
+                        </div>
 
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto p-6 pt-4">
                             {bookingSuccess ? (
                                 <div className="text-center py-8">
                                     <div className="mb-4 relative">
@@ -358,15 +362,12 @@ const StudentPortal = () => {
                                     </div>
                                     <h3 className="text-2xl font-bold text-white mb-2">Booking Confirmed!</h3>
                                     <p className="text-white/70">Your session has been scheduled successfully</p>
-                                    {/* Confetti celebration */}
                                     <Confetti duration={3000} particleCount={60} />
                                 </div>
                             ) : (
                                 <>
-                                    <h3 className="text-2xl font-bold text-white mb-6">Confirm Booking</h3>
-
                                     {/* Session Details */}
-                                    <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-400/30 space-y-2">
+                                    <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-400/30 space-y-2">
                                         <div className="flex justify-between">
                                             <span className="text-white/70">Tutor:</span>
                                             <span className="text-white font-semibold">{bookingSlot.tutorName}</span>
@@ -381,15 +382,8 @@ const StudentPortal = () => {
                                         </div>
                                     </div>
 
-                                    {/* Bio */}
-                                    {bookingSlot.bio && (
-                                        <div className="mb-6 p-3 rounded-lg bg-white/5 border-l-4 border-blue-400">
-                                            <p className="text-white/70 text-sm italic">"{bookingSlot.bio}"</p>
-                                        </div>
-                                    )}
-
-                                    {/* Form */}
-                                    <form onSubmit={handleBookingConfirm}>
+                                    {/* Form Fields */}
+                                    <form id="booking-form" onSubmit={handleBookingConfirm}>
                                         <div className="mb-4">
                                             <label className="block text-white/90 text-sm font-medium mb-2">Your Name</label>
                                             <div className="relative">
@@ -405,7 +399,7 @@ const StudentPortal = () => {
                                             </div>
                                         </div>
 
-                                        {/* Study Materials Field */}
+                                        {/* Study Materials */}
                                         <div className="mb-4">
                                             <label className="block text-white/90 text-sm font-medium mb-2">
                                                 <FileText size={16} className="inline mr-2 text-blue-400" />
@@ -415,25 +409,25 @@ const StudentPortal = () => {
                                                 value={studyMaterials}
                                                 onChange={(e) => setStudyMaterials(e.target.value)}
                                                 rows="2"
-                                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm resize-none mb-3"
+                                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm resize-none"
                                                 placeholder="Topics, chapters, or materials you want to cover..."
                                             />
-
-                                            {/* File Upload */}
-                                            <div className="mt-3">
-                                                <label className="block text-white/70 text-xs font-medium mb-2">
-                                                    <Paperclip size={14} className="inline mr-1" />
-                                                    Attach Files
-                                                </label>
-                                                <FileUpload
-                                                    onFilesChange={(files) => setUploadedFiles(files)}
-                                                    disabled={isBooking}
-                                                />
-                                            </div>
                                         </div>
 
-                                        {/* Message for Tutor Field */}
-                                        <div className="mb-6">
+                                        {/* File Upload */}
+                                        <div className="mb-4">
+                                            <label className="block text-white/70 text-xs font-medium mb-2">
+                                                <Paperclip size={14} className="inline mr-1" />
+                                                Attach Files
+                                            </label>
+                                            <FileUpload
+                                                onFilesChange={(files) => setUploadedFiles(files)}
+                                                disabled={isBooking}
+                                            />
+                                        </div>
+
+                                        {/* Message for Tutor */}
+                                        <div className="mb-2">
                                             <label className="block text-white/90 text-sm font-medium mb-2">
                                                 <Mail size={16} className="inline mr-2 text-purple-400" />
                                                 Message for Tutor (Optional)
@@ -446,38 +440,44 @@ const StudentPortal = () => {
                                                 placeholder="Any notes or questions for your tutor..."
                                             />
                                         </div>
-
-                                        <div className="flex gap-3">
-                                            <Button
-                                                type="button"
-                                                onClick={() => setBookingSlot(null)}
-                                                variant="outline"
-                                                size="lg"
-                                                className="flex-1"
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                disabled={isBooking}
-                                                variant="primary"
-                                                size="lg"
-                                                className="flex-1"
-                                            >
-                                                {isBooking ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <LoadingSpinner size="sm" />
-                                                        <span>Booking...</span>
-                                                    </div>
-                                                ) : (
-                                                    'Confirm'
-                                                )}
-                                            </Button>
-                                        </div>
                                     </form>
                                 </>
                             )}
-                        </GlassCard>
+                        </div>
+
+                        {/* Fixed Footer with Buttons */}
+                        {!bookingSuccess && (
+                            <div className="p-6 pt-4 border-t border-white/10 flex-shrink-0">
+                                <div className="flex gap-3">
+                                    <Button
+                                        type="button"
+                                        onClick={() => setBookingSlot(null)}
+                                        variant="outline"
+                                        size="lg"
+                                        className="flex-1"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        form="booking-form"
+                                        disabled={isBooking}
+                                        variant="primary"
+                                        size="lg"
+                                        className="flex-1"
+                                    >
+                                        {isBooking ? (
+                                            <div className="flex items-center gap-2">
+                                                <LoadingSpinner size="sm" />
+                                                <span>Booking...</span>
+                                            </div>
+                                        ) : (
+                                            'Confirm'
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
