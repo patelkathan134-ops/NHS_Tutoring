@@ -36,6 +36,8 @@ const TutorDashboard = () => {
     const [gradeLevel, setGradeLevel] = useState('');
     const [newTutorName, setNewTutorName] = useState('');
     const [newTutorPassword, setNewTutorPassword] = useState('');
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [newTutorIsAdmin, setNewTutorIsAdmin] = useState(false);
 
     useEffect(() => {
         if (!tutorId) {
@@ -47,12 +49,33 @@ const TutorDashboard = () => {
 
     const fetchTutorData = async () => {
         try {
-            if (tutorId === "Rene Mahn") {
+            // First, fetch current tutor's data to check if admin
+            const myDocRef = doc(db, 'tutors', tutorId);
+            const myDocSnap = await getDoc(myDocRef);
+
+            let currentIsAdmin = false;
+            if (myDocSnap.exists()) {
+                const data = myDocSnap.data();
+                // Auto-migrate: Rene Mahn is always admin (for backwards compatibility)
+                currentIsAdmin = data.isAdmin === true || tutorId === "Rene Mahn";
+                setIsAdmin(currentIsAdmin);
+                setSelectedSubjects(data.subjects || []);
+                setBio(data.bio || '');
+                setGradeLevel(data.gradeLevel || '');
+
+                // If Rene Mahn but not marked as admin in DB, update it
+                if (tutorId === "Rene Mahn" && !data.isAdmin) {
+                    await setDoc(myDocRef, { isAdmin: true }, { merge: true });
+                }
+            }
+
+            if (currentIsAdmin) {
+                // Admin: fetch all bookings across all tutors
                 const querySnapshot = await getDocs(collection(db, 'tutors'));
                 let allBookings = [];
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
                     const slots = data.slots || [];
                     const booked = slots.filter(s => s.status === 'Booked' && !isExpired(s.expiryDate));
                     const bookedWithTutor = booked.map(s => ({ ...s, tutorName: data.name }));
@@ -61,29 +84,12 @@ const TutorDashboard = () => {
 
                 setBookedSlots(allBookings);
 
-                const myDocRef = doc(db, 'tutors', tutorId);
-                const myDocSnap = await getDoc(myDocRef);
+            } else {
+                // Non-admin: just fetch own data
                 if (myDocSnap.exists()) {
                     const data = myDocSnap.data();
-                    setSelectedSubjects(data.subjects || []);
-                    // setAvailability(data.rawAvailability || {}); // Removed as part of new slot logic
-                    setBio(data.bio || '');
-                    setGradeLevel(data.gradeLevel || '');
-                }
-
-            } else {
-                const docRef = doc(db, 'tutors', tutorId);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setSelectedSubjects(data.subjects || []);
-                    // setAvailability(data.rawAvailability || {}); // Removed as part of new slot logic
-                    setBio(data.bio || '');
-                    setGradeLevel(data.gradeLevel || '');
-
                     const allSlots = data.slots || [];
-                    setMySlots(allSlots); // Keep for "My Active Availability" list
+                    setMySlots(allSlots);
                     const booked = allSlots.filter(s => s.status === 'Booked' && !isExpired(s.expiryDate));
                     setBookedSlots(booked);
                     const available = allSlots.filter(s => s.status === 'Available' && !isExpired(s.expiryDate));
@@ -152,10 +158,12 @@ const TutorDashboard = () => {
                 slots: [],
                 bio: '',
                 gradeLevel: '',
-                rawAvailability: {}
+                rawAvailability: {},
+                isAdmin: newTutorIsAdmin
             });
 
-            setMessage('tutor-added');
+            setMessage(newTutorIsAdmin ? 'admin-added' : 'tutor-added');
+            setNewTutorIsAdmin(false);
             setNewTutorName('');
             setNewTutorPassword('');
             setTimeout(() => setMessage(''), 3000);
@@ -221,13 +229,14 @@ const TutorDashboard = () => {
                             }`}>
                             {message === 'success' && '✓ Settings saved successfully!'}
                             {message === 'tutor-added' && '✓ Tutor account created successfully!'}
+                            {message === 'admin-added' && '✓ Admin account created successfully!'}
                             {message === 'error' && '✗ An error occurred. Please try again.'}
                         </p>
                     </div>
                 )}
 
                 {/* Admin Panel */}
-                {tutorId === "Rene Mahn" && (
+                {isAdmin && (
                     <div className="mb-8 animate-slide-up">
                         <GlassCard hover={false} className="bg-gradient-to-br from-purple-600/20 to-pink-600/20">
                             <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -256,9 +265,20 @@ const TutorDashboard = () => {
                                         required
                                     />
                                 </div>
-                                <Button type="submit" variant="primary" className="md:mt-auto">
-                                    Create Tutor
-                                </Button>
+                                <div className="flex items-center gap-3 md:mt-auto">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newTutorIsAdmin}
+                                            onChange={(e) => setNewTutorIsAdmin(e.target.checked)}
+                                            className="w-5 h-5 rounded bg-white/10 border border-white/20 checked:bg-purple-500 cursor-pointer"
+                                        />
+                                        <span className="text-white/90 text-sm font-medium">Make Admin</span>
+                                    </label>
+                                    <Button type="submit" variant="primary">
+                                        {newTutorIsAdmin ? 'Create Admin' : 'Create Tutor'}
+                                    </Button>
+                                </div>
                             </form>
                         </GlassCard>
                     </div>

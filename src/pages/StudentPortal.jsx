@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Search, Calendar, User, ArrowLeft, X, BookOpen, Clock, Sparkles, Calculator, Beaker, MessageSquare, Brain } from 'lucide-react';
+import { Search, Calendar, User, ArrowLeft, X, BookOpen, Clock, Sparkles, Calculator, Beaker, MessageSquare, Brain, FileText, Mail, Paperclip } from 'lucide-react';
 import { getNextSessionDate, isExpired } from '../utils/dateUtils';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
@@ -10,6 +10,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import SkeletonLoader from '../components/SkeletonLoader';
 import Confetti from '../components/Confetti';
 import Footer from '../components/Footer';
+import FileUpload from '../components/FileUpload';
 import { CATEGORIES, SUBJECTS, getSubjectsByCategory } from '../data/SubjectCategories';
 
 const StudentPortal = () => {
@@ -21,6 +22,9 @@ const StudentPortal = () => {
     const [hasSearched, setHasSearched] = useState(false);
     const [bookingSlot, setBookingSlot] = useState(null);
     const [studentName, setStudentName] = useState('');
+    const [studyMaterials, setStudyMaterials] = useState('');
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [messageForTutor, setMessageForTutor] = useState('');
     const [isBooking, setIsBooking] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(false);
 
@@ -73,6 +77,9 @@ const StudentPortal = () => {
             gradeLevel: tutor.gradeLevel
         });
         setStudentName('');
+        setStudyMaterials('');
+        setUploadedFiles([]);
+        setMessageForTutor('');
         setBookingSuccess(false);
     };
 
@@ -115,6 +122,9 @@ const StudentPortal = () => {
             slots[slotIndex].studentName = studentName;
             slots[slotIndex].subject = selectedSubject;
             slots[slotIndex].expiryDate = expiryDate;
+            slots[slotIndex].studyMaterials = studyMaterials || '';
+            slots[slotIndex].uploadedFiles = uploadedFiles || [];
+            slots[slotIndex].messageForTutor = messageForTutor || '';
 
             await updateDoc(tutorRef, { slots });
 
@@ -380,7 +390,7 @@ const StudentPortal = () => {
 
                                     {/* Form */}
                                     <form onSubmit={handleBookingConfirm}>
-                                        <div className="mb-6">
+                                        <div className="mb-4">
                                             <label className="block text-white/90 text-sm font-medium mb-2">Your Name</label>
                                             <div className="relative">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" size={20} />
@@ -393,6 +403,48 @@ const StudentPortal = () => {
                                                     required
                                                 />
                                             </div>
+                                        </div>
+
+                                        {/* Study Materials Field */}
+                                        <div className="mb-4">
+                                            <label className="block text-white/90 text-sm font-medium mb-2">
+                                                <FileText size={16} className="inline mr-2 text-blue-400" />
+                                                Study Materials (Optional)
+                                            </label>
+                                            <textarea
+                                                value={studyMaterials}
+                                                onChange={(e) => setStudyMaterials(e.target.value)}
+                                                rows="2"
+                                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm resize-none mb-3"
+                                                placeholder="Topics, chapters, or materials you want to cover..."
+                                            />
+
+                                            {/* File Upload */}
+                                            <div className="mt-3">
+                                                <label className="block text-white/70 text-xs font-medium mb-2">
+                                                    <Paperclip size={14} className="inline mr-1" />
+                                                    Attach Files
+                                                </label>
+                                                <FileUpload
+                                                    onFilesChange={(files) => setUploadedFiles(files)}
+                                                    disabled={isBooking}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Message for Tutor Field */}
+                                        <div className="mb-6">
+                                            <label className="block text-white/90 text-sm font-medium mb-2">
+                                                <Mail size={16} className="inline mr-2 text-purple-400" />
+                                                Message for Tutor (Optional)
+                                            </label>
+                                            <textarea
+                                                value={messageForTutor}
+                                                onChange={(e) => setMessageForTutor(e.target.value)}
+                                                rows="2"
+                                                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 backdrop-blur-sm resize-none"
+                                                placeholder="Any notes or questions for your tutor..."
+                                            />
                                         </div>
 
                                         <div className="flex gap-3">
