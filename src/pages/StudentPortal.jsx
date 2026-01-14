@@ -189,7 +189,7 @@ const StudentPortal = () => {
                     {/* Subject Cards Grid */}
                     <div className="subjects-grid">
                         {filteredSubjects.map((subject) => {
-                            const IconComponent = getIconComponent(subject.icon);
+                            const IconComponent = getIconComponent(subject.icon) || BookOpen;
                             const isSelected = selectedSubject?.id === subject.id;
 
                             return (
@@ -203,14 +203,9 @@ const StudentPortal = () => {
                                             {subject.badge}
                                         </span>
                                     )}
-                                    <IconComponent className="subject-card-icon" style={{
-                                        background: 'linear-gradient(135deg, #0EA5E9, #3B82F6)',
-                                        WebkitBackgroundClip: 'text',
-                                        WebkitTextFillColor: 'transparent',
-                                        backgroundClip: 'text'
-                                    }} />
+                                    <IconComponent className="subject-card-icon" size={32} />
                                     <span className="subject-card-name">{subject.name}</span>
-                                    <span className="tutor-count">{subject.tutorCount} tutors available</span>
+                                    <span className="tutor-count">{subject.tutorCount || 0} tutors available</span>
                                 </div>
                             );
                         })}
