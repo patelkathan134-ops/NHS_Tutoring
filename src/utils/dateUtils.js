@@ -73,6 +73,13 @@ export function convertTo12Hour(hours, minutes) {
  */
 export function isSlotExpired(expiryDateISO) {
     if (!expiryDateISO) return false;
+
+    // Handle Firestore Timestamp
+    if (expiryDateISO && typeof expiryDateISO.toDate === 'function') {
+        return expiryDateISO.toDate() <= new Date();
+    }
+
+    // Handle Date object or ISO string
     return new Date(expiryDateISO) <= new Date();
 }
 

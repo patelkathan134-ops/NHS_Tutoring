@@ -48,17 +48,62 @@ const StudentPortal = () => {
         setTutors([]);
 
         try {
+            console.log("Searching for:", selectedSubject.name);
             const q = query(collection(db, 'tutors'), where('subjects', 'array-contains', selectedSubject.name));
             const querySnapshot = await getDocs(q);
             const results = [];
             querySnapshot.forEach((doc) => {
-                results.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                if (data && typeof data === 'object') {
+                    // STRICT SANITIZATION
+                    const cleanTutor = {
+                        id: doc.id,
+                        name: typeof data.name === 'string' ? data.name : 'Unknown Tutor',
+                        bio: typeof data.bio === 'string' ? data.bio : '',
+                        gradeLevel: typeof data.gradeLevel === 'string' ? data.gradeLevel : '',
+                        slots: Array.isArray(data.slots) ? data.slots.map(s => {
+                            if (!s) return null;
+                            // Sanitize each slot
+                            let expiryDate = s.expiryDate;
+                            if (expiryDate && typeof expiryDate.toDate === 'function') {
+                                expiryDate = expiryDate.toDate().toISOString();
+                            } else if (expiryDate instanceof Date) {
+                                expiryDate = expiryDate.toISOString();
+                            }
+
+                            return {
+                                id: s.id || Math.random().toString(36),
+                                day: typeof s.day === 'string' ? s.day : 'Unknown Day',
+                                time: typeof s.time === 'string' ? s.time : 'Unknown Time',
+                                status: s.status || 'Available',
+                                expiryDate: expiryDate, // Keep as ISO string or original if primitive
+                                subject: null, // Don't carry over complex subject objects
+                            };
+                        }).filter(Boolean) : [] // Remove nulls
+                    };
+                    results.push(cleanTutor);
+                }
             });
             setTutors(results);
         } catch (error) {
             console.error("Error searching tutors:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Helper to safely render text
+    const safeRender = (value, fallback = '') => {
+        if (value === null || value === undefined) return fallback;
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number') return String(value);
+        if (typeof value === 'boolean') return String(value);
+        if (value instanceof Date) return value.toLocaleDateString();
+        // If it's an object, try to render a string representation or fallback
+        try {
+            return JSON.stringify(value);
+        } catch (e) {
+            return fallback;
         }
     };
 
@@ -251,11 +296,23 @@ const StudentPortal = () => {
                         </div>
                     )}
 
+
+
                     {tutors.map((tutor, index) => {
-                        const availableSlots = (tutor.slots || []).filter(s => {
-                            if (s.status === 'Available') return true;
-                            if (s.status === 'Booked' && s.expiryDate && isExpired(s.expiryDate)) return true;
-                            return false;
+                        // Extra safety check for tutor object
+                        if (!tutor) return null;
+
+                        const slots = Array.isArray(tutor.slots) ? tutor.slots : [];
+                        const availableSlots = slots.filter(s => {
+                            if (!s) return false; // Filter out null slots explicitly
+                            try {
+                                if (s.status === 'Available') return true;
+                                if (s.status === 'Booked' && s.expiryDate && isExpired(s.expiryDate)) return true;
+                                return false;
+                            } catch (e) {
+                                console.error("Error checking slot expiry:", e);
+                                return false;
+                            }
                         });
 
                         if (availableSlots.length === 0) return null;
@@ -273,13 +330,17 @@ const StudentPortal = () => {
                                             <div className="relative">
                                                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full blur-md opacity-50"></div>
                                                 <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                                                    {tutor.name.charAt(0)}
+                                                    {typeof tutor.name === 'string' ? tutor.name.charAt(0) : '?'}
                                                 </div>
                                             </div>
                                             <div>
-                                                <h3 className="text-2xl font-bold text-white">{tutor.name}</h3>
+                                                <h3 className="text-2xl font-bold text-white">
+                                                    {safeRender(tutor.name, 'Tutor')}
+                                                </h3>
                                                 {tutor.gradeLevel && (
-                                                    <span className="text-white/60 text-sm">{tutor.gradeLevel}</span>
+                                                    <span className="text-white/60 text-sm">
+                                                        {safeRender(tutor.gradeLevel)}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -292,7 +353,7 @@ const StudentPortal = () => {
                                     {/* Bio */}
                                     {tutor.bio && (
                                         <div className="mb-6 p-4 rounded-xl bg-white/5 border-l-4 border-purple-400">
-                                            <p className="text-white/80 italic">"{tutor.bio}"</p>
+                                            <p className="text-white/80 italic">"{safeRender(tutor.bio)}"</p>
                                         </div>
                                     )}
 
@@ -312,8 +373,8 @@ const StudentPortal = () => {
                                                     <div className="flex items-center gap-3">
                                                         <Calendar size={20} className="text-blue-400" />
                                                         <div className="flex flex-col items-start">
-                                                            <span className="font-semibold text-white">{slot.day}</span>
-                                                            <span className="text-sm text-white/70">{slot.time}</span>
+                                                            <span className="font-semibold text-white">{safeRender(slot.day, 'No Date')}</span>
+                                                            <span className="text-sm text-white/70">{safeRender(slot.time, 'No Time')}</span>
                                                         </div>
                                                     </div>
                                                     <span className="text-sm font-bold text-purple-400 group-hover:text-purple-300">Book →</span>
@@ -373,7 +434,7 @@ const StudentPortal = () => {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-white/70">Time:</span>
-                                            <span className="text-white font-semibold">{bookingSlot.day}, {bookingSlot.time}</span>
+                                            <span className="text-white font-semibold">{safeRender(bookingSlot.day)}, {safeRender(bookingSlot.time)}</span>
                                         </div>
                                     </div>
 
