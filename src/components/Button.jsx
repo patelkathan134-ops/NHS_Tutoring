@@ -8,6 +8,7 @@ export default function Button({
     className = '',
     disabled = false,
     type = 'button',
+    form,
     icon,
     iconPosition = 'left'
 }) {
@@ -81,6 +82,7 @@ export default function Button({
         <button
             ref={buttonRef}
             type={type}
+            form={form}
             onClick={handleClick}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
