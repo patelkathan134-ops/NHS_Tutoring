@@ -335,9 +335,9 @@ const StudentPortal = () => {
 
             {/* Booking Modal */}
             {bookingSlot && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-                    <div className="w-full max-w-md animate-scale-in">
-                        <GlassCard hover={false} className="relative">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
+                    <div className="w-full max-w-md animate-scale-in my-auto">
+                        <GlassCard hover={false} className="relative max-h-[90vh] overflow-y-auto">
                             {/* Close Button */}
                             <button
                                 onClick={() => setBookingSlot(null)}
